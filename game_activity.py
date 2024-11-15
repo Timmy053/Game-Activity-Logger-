@@ -5,7 +5,6 @@ import os
 import datetime
 
 # Load configurations from .env file
-load_dotenv()
 TOKEN = ('MTI5MTEyMDc4MjQzNjQ3MDc4NQ.G9U47c.lUIFPklQucl3_3FfGOft5HX7aSzv4PJPUMVnCk')
 
 intents = discord.Intents.default()
@@ -47,9 +46,33 @@ async def get_guild_id(interaction: discord.Interaction):
     channel="The channel to log game activities."
 )
 async def set_game_activity_channel(interaction: discord.Interaction, guild_id: int, channel: discord.TextChannel):
-    if interaction.guild.id != guild_id:
+    try:
+        # Validate the `guild_id` input
+        if not isinstance(guild_id, int) or guild_id <= 0:
+            await interaction.response.send_message(
+                "❌ Invalid guild ID. Please enter a valid integer. Use `/get_guild_id` to fetch the correct server ID.",
+                ephemeral=True,
+            )
+            return
+
+        # Ensure the entered ID matches the current server
+        if interaction.guild.id != guild_id:
+            await interaction.response.send_message(
+                "❌ The server ID you entered does not match this server. Please double-check and try again.",
+                ephemeral=True,
+            )
+            return
+
+        # Save the channel for the given guild
+        game_activity_channels[guild_id] = channel.id
         await interaction.response.send_message(
-            "The server ID you entered does not match this server. Please double-check and try again.",
+            f"✅ Game activity logs for **{interaction.guild.name}** will now be sent to {channel.mention}.",
+            ephemeral=True,
+        )
+
+    except Exception as e:
+        await interaction.response.send_message(
+            f"❌ An error occurred: {e}. Please contact support.",
             ephemeral=True,
         )
         return
